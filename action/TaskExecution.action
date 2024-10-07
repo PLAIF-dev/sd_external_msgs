@@ -1,5 +1,8 @@
+# Goal
 string[] tasks
 ---
+# Result
 int8 result  # 1: success, 2: cancelled, 3: error etc.
 ---
-bool feedback
+# Feedback
+int8 feedback
