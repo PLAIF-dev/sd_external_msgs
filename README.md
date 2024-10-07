@@ -17,6 +17,12 @@ colcon build --packages-select sd_external_msgs
 source install/setup.bash
 ```
 
+Python dependencies:
+```
+sudo apt install python3-rosdep
+pip install empy==3.3.4 catkin-pkg lark rosdep
+```
+
 ## Examples scripts
 
 Test server
