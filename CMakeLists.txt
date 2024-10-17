@@ -19,7 +19,6 @@ set(action_files
 set(msg_files
   "msg/BoundingBox2DArray.msg"
   "msg/Gripper.msg"
-  "msg/Weight.msg"
 )
 set(srv_files
   "srv/GripperControl.srv"

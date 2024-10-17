@@ -1,36 +1,77 @@
-import time
 import rclpy
+import time
 from rclpy.node import Node
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from sd_external_msgs.action import TaskExecution
+from sd_external_msgs.srv import GripperControl, Pause, Reset, Resume
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 
 
 class TaskExecutionServer(Node):
 
     def __init__(self):
         super().__init__('task_execution_server')
+        self._create_interaces()
         self.get_logger().info("task_execution_server started.")
 
-        self._action_server = ActionServer(
+    def _create_interaces(self):
+        callback_group = ReentrantCallbackGroup()
+        self._task_server = ActionServer(
             self,
             TaskExecution,
-            'task_execution',
-            execute_callback=self.execute_callback,
-            goal_callback=self.goal_callback,
-            cancel_callback=self.cancel_callback
+            'task/execute',
+            execute_callback=self._execute_callback,
+            goal_callback=self._goal_callback,
+            cancel_callback=self._cancel_callback,
+            callback_group=ReentrantCallbackGroup()
+        )
+        self.create_service(
+            GripperControl,
+            "gripper/control",
+            self._gripper_callback,
+            callback_group=MutuallyExclusiveCallbackGroup()
+        )
+        self.create_service(
+            Pause,
+            "task/pause",
+            self._pause_callback,
+            callback_group=callback_group
+        )
+        self.create_service(
+            Reset,
+            "task/reset",
+            self._reset_callback,
+            callback_group=callback_group
+        )
+        self.create_service(
+            Resume,
+            "task/resume",
+            self._resume_callback,
+            callback_group=callback_group
         )
 
-    def goal_callback(self, goal_request):
-        """Callback to accept or reject a client request to start an action."""
-        self.get_logger().info(f'Received goal request with tasks: {goal_request.tasks}')
-        return GoalResponse.ACCEPT
+    def _gripper_callback(self, req: GripperControl.Request, res: GripperControl.Response):
+        """Dummy Server."""
+        self.get_logger().info("gripper request received.")
+        return res
 
-    def cancel_callback(self, goal_handle):
-        """Callback to accept or reject a client request to cancel an action."""
-        self.get_logger().info('Received request to cancel goal')
-        return CancelResponse.ACCEPT
+    def _pause_callback(self, req: Pause.Request, res: Pause.Response):
+        """Dummy Server."""
+        self.get_logger().info("pause request received.")
+        return res
 
-    async def execute_callback(self, goal_handle):
+    def _reset_callback(self, req: Reset.Request, res: Reset.Response):
+        """Dummy Server."""
+        self.get_logger().info("reset request received.")
+        return res
+
+    def _resume_callback(self, req: Resume.Request, res: Resume.Response):
+        """Dummy Server."""
+        self.get_logger().info("resume request received.")
+        return res
+
+    async def _execute_callback(self, goal_handle):
         """Execute the goal by processing the tasks and providing feedback."""
         self.get_logger().info('Executing goal...')
 
@@ -51,7 +92,7 @@ class TaskExecutionServer(Node):
             goal_handle.publish_feedback(feedback_msg)
 
             # Simulate some work
-            time.sleep(2)
+            time.sleep(3)
 
         # Complete the goal
         goal_handle.succeed()
@@ -60,22 +101,33 @@ class TaskExecutionServer(Node):
         self.get_logger().info('Goal succeeded')
         return result
 
+    def _goal_callback(self, goal_request):
+        self.get_logger().info(f'Received goal request with tasks: {goal_request.tasks}')
+        return GoalResponse.ACCEPT
+
+    def _cancel_callback(self, goal_handle):
+        self.get_logger().info('Received request to cancel goal')
+        return CancelResponse.ACCEPT
+
     def destroy(self):
-        self._action_server.destroy()
+        self._task_server.destroy()
         super().destroy_node()
 
 
 def main(args=None):
     rclpy.init(args=args)
     task_execution_server = TaskExecutionServer()
+    executor = MultiThreadedExecutor()
+    executor.add_node(task_execution_server)
 
     try:
-        rclpy.spin(task_execution_server)
+        executor.spin()
     except KeyboardInterrupt:
         pass
 
+    executor.shutdown()
     task_execution_server.destroy()
-    rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
