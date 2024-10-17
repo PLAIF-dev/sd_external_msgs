@@ -10,20 +10,29 @@ find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(vision_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 set(action_files
   "action/TaskExecution.action"
 )
 set(msg_files
+  "msg/BoundingBox2DArray.msg"
+  "msg/Gripper.msg"
   "msg/Weight.msg"
+)
+set(srv_files
+  "srv/GripperControl.srv"
+  "srv/Pause.srv"
+  "srv/Reset.srv"
+  "srv/Resume.srv"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
   ${action_files}
-  # ${srv_files}
-  DEPENDENCIES std_msgs geometry_msgs sensor_msgs
+  ${srv_files}
+  DEPENDENCIES std_msgs geometry_msgs sensor_msgs vision_msgs
 )
 
 ament_package()
