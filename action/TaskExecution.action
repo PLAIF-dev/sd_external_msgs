@@ -2,6 +2,7 @@
 string[] tasks
 string color
 int64 mass
+int8 pick_mode  # 0: ignore, 1: with cap, 2: without cap
 vision_msgs/BoundingBox2D bbox
 ---
 # Result
